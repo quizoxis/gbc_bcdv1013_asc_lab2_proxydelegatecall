@@ -1,11 +1,11 @@
-const ProxyDelegate = artifacts.require('ProxyDelegate');
+const ProxyDelegate = artifacts.require('ProxyDelegateWithCall');
 const SomeLibrary = artifacts.require('SomeLibrary');
 const truffleAssert = require('truffle-assertions');
 const ethers = require('ethers');
 const utils = ethers.utils;
 const BN = require('bn.js');
 
-contract("ProxyDelegate", accounts => {
+contract("ProxyDelegateWithCall", accounts => {
     let proxy;
     let lib;
     const coder = new ethers.utils.AbiCoder();
@@ -22,14 +22,16 @@ contract("ProxyDelegate", accounts => {
     })
 
     it("getMsgSender by delegatecall should pass", () => {
+
         // generate the function selector for getMsgSender()
         const data = utils.id("getMsgSender()").slice(0,10);
+
         return proxy.sendTransaction({from: accounts[1], data })
             .then(tx => {
                 truffleAssert.eventEmitted(tx, 'LogResult', (ev) => {
                     // perform a case insensitive comparison of the address
                     // for account[1] and the address logged in the event
-                    const regex = new RegExp(accounts[1].slice(2), 'i')
+                    const regex = new RegExp(proxy.address.slice(2), 'i')
                     return regex.test(ev.result);
                 });
             });
@@ -44,6 +46,11 @@ contract("ProxyDelegate", accounts => {
 
         // encode the argument
         const versionData = coder.encode(["uint256"], [expectedVersion]);
+
+        console.log('selector:' + selector);
+        console.log('versionData:' + versionData);
+
+
         const data = utils.hexlify(utils.concat([selector,versionData]));
         await proxy.sendTransaction({from: accounts[1], data });
 
@@ -53,7 +60,7 @@ contract("ProxyDelegate", accounts => {
 
         // check if the version in lib is set
         const version = await lib.version();
-        assert.ok(version.toString() === "1", "version mismatch");
+        assert.ok(version.toString() === "3", "version mismatch");
         // assert.equal(version.toString(), new BN(expectedVersion), "version mismatch");
 
 

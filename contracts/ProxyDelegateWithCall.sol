@@ -1,6 +1,6 @@
 pragma solidity ^0.5.0;
 
-contract ProxyDelegate {
+contract ProxyDelegateWithCall {
 
     uint256 public version;
     address public owner;
@@ -13,8 +13,10 @@ contract ProxyDelegate {
         delegate = delegateAddress;
     }
 
+    // add a new Proxy contract which will use .call() instead of .delegatecall()
     function() external {
-        (bool success, bytes memory returnData) = delegate.delegatecall(msg.data);
+        (bool success, bytes memory returnData) = delegate.call(msg.data);
+
         require(success, "external call failed");
         emit LogResult(returnData);
     }
